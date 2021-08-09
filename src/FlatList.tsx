@@ -1,5 +1,5 @@
-import React from 'react'
-import { FlatList as RNFlatList, FlatListProps } from 'react-native'
+import React, { useCallback } from 'react'
+import { FlatList as RNFlatList, FlatListProps, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 
 import { AnimatedFlatList, IS_IOS } from './helpers'
 import {
@@ -103,6 +103,16 @@ function FlatListImpl<R>(
   )
   const memoStyle = React.useMemo(() => [_style, style], [_style, style])
 
+  const extendedScrollHandler = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (onScroll) {
+      onScroll(event);
+      }
+      scrollHandler(event)
+    },
+    [scrollHandler, onScroll]
+  )
+
   return (
     // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
     <FlatListMemo
@@ -112,7 +122,7 @@ function FlatListImpl<R>(
       style={memoStyle}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
-      onScroll={onScroll}
+      onScroll={extendedScrollHandler}
       onContentSizeChange={scrollContentSizeChangeHandlers}
       scrollEventThrottle={16}
       contentInset={memoContentInset}
