@@ -128,5 +128,5 @@ function FlatListImpl<R>(
  * Use like a regular FlatList.
  */
 export const FlatList = React.forwardRef(FlatListImpl) as <T>(
-  p: FlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> }
+  p: FlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> } & { externalScrollY?: Animated.SharedValue<number> }
 ) => React.ReactElement
