@@ -458,6 +458,7 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
       snapThreshold,
       enabled,
       scrollTo,
+      externalScrollY,
     ]
   )
 
