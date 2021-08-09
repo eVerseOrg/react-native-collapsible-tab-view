@@ -212,7 +212,7 @@ export function useScroller<T extends RefComponent>() {
   return scroller
 }
 
-export const useScrollHandlerY = (name: TabName) => {
+export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.SharedValue<number>) => {
   const {
     accDiffClamp,
     focusedTab,
@@ -360,9 +360,20 @@ export const useScrollHandlerY = (name: TabName) => {
               [0, clampMax],
               Extrapolate.CLAMP
             )
+            if (externalScrollY) {
+              externalScrollY.value = interpolate(
+                y,
+                [0, clampMax],
+                [0, clampMax],
+                Extrapolate.CLAMP
+              )
+            }
           } else {
             const { y } = event.contentOffset
             scrollYCurrent.value = y
+            if (externalScrollY) {
+              externalScrollY.value = y;
+            }
           }
 
           scrollY.value[index.value] = scrollYCurrent.value

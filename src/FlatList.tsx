@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react'
-import { FlatList as RNFlatList, FlatListProps, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import React from 'react'
+import { FlatList as RNFlatList, FlatListProps } from 'react-native'
 
 import { AnimatedFlatList, IS_IOS } from './helpers'
 import {
@@ -12,6 +12,7 @@ import {
   useTabsContext,
   useUpdateScrollViewContentSize,
 } from './hooks'
+import Animated from 'react-native-reanimated'
 
 /**
  * Used as a memo to prevent rerendering too often when the context changes.
@@ -37,16 +38,16 @@ function FlatListImpl<R>(
     style,
     onContentSizeChange,
     refreshControl,
-    onScroll,
     ...rest
-  }: FlatListProps<R>,
-  passRef: React.Ref<RNFlatList>
+  }: Omit<FlatListProps<R>, 'onScroll'>,
+  passRef: React.Ref<RNFlatList>,
+  externalScrollY?: Animated.SharedValue<number>
 ): React.ReactElement {
   const name = useTabNameContext()
   const { setRef, contentInset, scrollYCurrent } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
 
-  const { scrollHandler, enable } = useScrollHandlerY(name)
+  const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY)
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
     // otherwise we get an `onScroll` call with the initial scroll position which can break things
@@ -103,16 +104,6 @@ function FlatListImpl<R>(
   )
   const memoStyle = React.useMemo(() => [_style, style], [_style, style])
 
-  const extendedScrollHandler = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (onScroll) {
-        onScroll(event)
-      }
-      scrollHandler(event)
-    },
-    [scrollHandler, onScroll]
-  )
-
   return (
     // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
     <FlatListMemo
@@ -122,7 +113,7 @@ function FlatListImpl<R>(
       style={memoStyle}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
-      onScroll={extendedScrollHandler}
+      onScroll={scrollHandler}
       onContentSizeChange={scrollContentSizeChangeHandlers}
       scrollEventThrottle={16}
       contentInset={memoContentInset}
