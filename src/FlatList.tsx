@@ -47,6 +47,7 @@ function FlatListImpl<R>(
   const { setRef, contentInset, scrollYCurrent } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
 
+  console.log!('FLATLIST EXTERNAL SCROLL', externalScrollY)
   const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY)
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
