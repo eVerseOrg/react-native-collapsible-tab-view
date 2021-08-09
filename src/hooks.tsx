@@ -360,6 +360,7 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
               [0, clampMax],
               Extrapolate.CLAMP
             )
+            console.log('SCROLL HANDLER Y', y, externalScrollY);
             if (externalScrollY !== undefined) {
               externalScrollY.value = interpolate(
                 y,
