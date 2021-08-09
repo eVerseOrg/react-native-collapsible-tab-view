@@ -38,6 +38,7 @@ export {
   useFocusedTab,
   useAnimatedTabIndex,
   useCollapsibleStyle,
+  useTabsContext,
 } from './hooks'
 export { MaterialTabBar } from './MaterialTabBar/TabBar'
 export { MaterialTabItem } from './MaterialTabBar/TabItem'
