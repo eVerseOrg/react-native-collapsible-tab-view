@@ -37,8 +37,9 @@ function FlatListImpl<R>(
     style,
     onContentSizeChange,
     refreshControl,
+    onScroll,
     ...rest
-  }: Omit<FlatListProps<R>, 'onScroll'>,
+  }: FlatListProps<R>,
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
@@ -111,7 +112,7 @@ function FlatListImpl<R>(
       style={memoStyle}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
-      onScroll={scrollHandler}
+      onScroll={onScroll}
       onContentSizeChange={scrollContentSizeChangeHandlers}
       scrollEventThrottle={16}
       contentInset={memoContentInset}
