@@ -37,11 +37,11 @@ function FlatListImpl<R>(
     contentContainerStyle,
     style,
     onContentSizeChange,
+    externalScrollY,
     refreshControl,
     ...rest
   }: Omit<FlatListProps<R>, 'onScroll'>,
-  passRef: React.Ref<RNFlatList>,
-  externalScrollY?: Animated.SharedValue<number>
+  passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
   const { setRef, contentInset, scrollYCurrent } = useTabsContext()
@@ -129,5 +129,7 @@ function FlatListImpl<R>(
  * Use like a regular FlatList.
  */
 export const FlatList = React.forwardRef(FlatListImpl) as <T>(
-  p: FlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> } & { externalScrollY?: Animated.SharedValue<number> }
+  p: FlatListProps<T> & {
+    ref?: React.Ref<RNFlatList<T>>
+  }
 ) => React.ReactElement
