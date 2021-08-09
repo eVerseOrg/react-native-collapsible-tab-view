@@ -105,9 +105,9 @@ function FlatListImpl<R>(
 
   const extendedScrollHandler = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (onScroll) {
-      onScroll(event);
-      }
+      // if (onScroll) {
+      // onScroll(event);
+      // }
       scrollHandler(event)
     },
     [scrollHandler, onScroll]
