@@ -32,6 +32,10 @@ const FlatListMemo = React.memo(
   )
 )
 
+interface FlatListCustomProps<R> extends FlatListProps<R> {
+  externalScrollY?: Animated.SharedValue<number>
+}
+
 function FlatListImpl<R>(
   {
     contentContainerStyle,
@@ -40,14 +44,13 @@ function FlatListImpl<R>(
     externalScrollY,
     refreshControl,
     ...rest
-  }: Omit<FlatListProps<R>, 'onScroll'>,
+  }: Omit<FlatListCustomProps<R>, 'onScroll'>,
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
   const { setRef, contentInset, scrollYCurrent } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
 
-  console.log!('FLATLIST EXTERNAL SCROLL', externalScrollY)
   const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY)
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
@@ -129,7 +132,7 @@ function FlatListImpl<R>(
  * Use like a regular FlatList.
  */
 export const FlatList = React.forwardRef(FlatListImpl) as <T>(
-  p: FlatListProps<T> & {
+  p: FlatListCustomProps<T> & {
     ref?: React.Ref<RNFlatList<T>>
   }
 ) => React.ReactElement
