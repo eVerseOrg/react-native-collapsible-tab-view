@@ -5,7 +5,7 @@ import {
   useCallback,
   useContext,
   MutableRefObject,
-  useEffect,
+  useEffect, useRef,
 } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { ContainerRef, RefComponent } from 'react-native-collapsible-tab-view'
@@ -554,17 +554,30 @@ export function useAfterMountEffect(effect: React.EffectCallback) {
 }
 
 export function useConvertAnimatedToValue<T>(
-  animatedValue: Animated.SharedValue<T>
+  animatedValue: Animated.SharedValue<T>,
+  debounceTime: number = 0
 ) {
   const [value, setValue] = useState(animatedValue.value)
+  const debounceTimeout = useRef<number>()
+  const canSetValue = useRef<boolean>(true)
 
   useAnimatedReaction(
     () => {
       return animatedValue.value
     },
     (animValue) => {
-      if (animValue !== value) {
-        runOnJS(setValue)(animValue)
+      if (canSetValue.current) {
+        if (debounceTime !== 0) {
+          canSetValue.current = false
+        }
+        if (animValue !== value) {
+          runOnJS(setValue)(animValue)
+        }
+        if (debounceTime !== 0) {
+          debounceTimeout.current = setTimeout(debounceTime, () => {
+            canSetValue.current = true
+          })
+        }
       }
     },
     [value]
@@ -597,8 +610,7 @@ export function useHeaderMeasurements(): HeaderMeasurements {
  */
 export function useFocusedTab() {
   const { focusedTab } = useTabsContext()
-  const focusedTabValue = useConvertAnimatedToValue(focusedTab)
-  return focusedTabValue
+  return useConvertAnimatedToValue(focusedTab, 50)
 }
 
 /**
