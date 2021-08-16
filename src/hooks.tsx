@@ -553,37 +553,47 @@ export function useAfterMountEffect(effect: React.EffectCallback) {
   }, [didExecute, effect])
 }
 
+export function useDebounce(value: any, delay: number) {
+  // State and setters for debounced value
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(
+    () => {
+      // Update debounced value after delay
+      const handler = setTimeout(() => {
+        setDebouncedValue(value)
+      }, delay)
+      // Cancel the timeout if value changes (also on delay change or unmount)
+      // This is how we prevent debounced value from updating if value is changed ...
+      // .. within the delay period. Timeout gets cleared and restarted.
+      return () => {
+        clearTimeout(handler)
+      }
+    },
+    [value, delay] // Only re-call effect if value or delay changes
+  )
+  return debouncedValue
+}
+
 export function useConvertAnimatedToValue<T>(
   animatedValue: Animated.SharedValue<T>,
   debounceTime: number = 0
 ) {
   const [value, setValue] = useState(animatedValue.value)
-  const debounceTimeout = useRef<number>()
-  const canSetValue = useRef<boolean>(true)
+  const debounced = useDebounce(value, debounceTime)
 
   useAnimatedReaction(
     () => {
       return animatedValue.value
     },
     (animValue) => {
-      if (canSetValue.current) {
-        if (debounceTime !== 0) {
-          canSetValue.current = false
-        }
-        if (animValue !== value) {
-          runOnJS(setValue)(animValue)
-        }
-        if (debounceTime !== 0) {
-          debounceTimeout.current = setTimeout(debounceTime, () => {
-            canSetValue.current = true
-          })
-        }
+      if (animValue !== value) {
+        runOnJS(setValue)(animValue)
       }
     },
     [value]
   )
 
-  return value
+  return debounceTime === 0 ? value : debounced
 }
 
 interface HeaderMeasurements {
