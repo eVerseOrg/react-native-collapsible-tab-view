@@ -620,7 +620,7 @@ export function useHeaderMeasurements(): HeaderMeasurements {
  */
 export function useFocusedTab() {
   const { focusedTab } = useTabsContext()
-  return useConvertAnimatedToValue(focusedTab, 50)
+  return useConvertAnimatedToValue(focusedTab)
 }
 
 /**
