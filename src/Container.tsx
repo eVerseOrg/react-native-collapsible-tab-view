@@ -5,9 +5,11 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
+import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated, {
   runOnJS,
   runOnUI,
+  useAnimatedGestureHandler,
   useAnimatedReaction,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -147,6 +149,7 @@ export const Container = React.memo(
         false
       )
       const [data, setData] = React.useState(tabNamesArray)
+      const [isScrollFree, setIsScrollFree] = React.useState<boolean>(false)
 
       React.useEffect(() => {
         setData(tabNamesArray)
@@ -441,6 +444,21 @@ export const Container = React.memo(
         [onTabPress]
       )
 
+      const dragGestureHandler = useAnimatedGestureHandler(
+        {
+          onStart: (event, context) => {
+            console.log('ON GESTURE START', event.translationY)
+          },
+          onActive: (event, context) => {
+            console.log('ON GESTURE ACTIVE', event.translationY)
+          },
+          onEnd: (event, context) => {
+            console.log('ON GESTURE END', event.translationY)
+          },
+        },
+        []
+      )
+
       return (
         <Context.Provider
           value={{
@@ -472,72 +490,76 @@ export const Container = React.memo(
             headerTranslateY,
           }}
         >
-          <Animated.View
-            style={[styles.container, containerStyle]}
-            onLayout={onLayout}
-            pointerEvents="box-none"
-          >
+          <PanGestureHandler onGestureEvent={dragGestureHandler}>
             <Animated.View
+              style={[styles.container, containerStyle]}
+              onLayout={onLayout}
               pointerEvents="box-none"
-              style={[
-                styles.topContainer,
-                headerContainerStyle,
-                !cancelTranslation && stylez,
-              ]}
             >
-              <View
-                style={[styles.container, styles.headerContainer]}
-                onLayout={getHeaderHeight}
+              <Animated.View
                 pointerEvents="box-none"
+                style={[
+                  styles.topContainer,
+                  headerContainerStyle,
+                  !cancelTranslation && stylez,
+                ]}
               >
-                {renderHeader &&
-                  renderHeader({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    onTabPress,
-                    tabProps,
-                  })}
-              </View>
-              <View
-                style={[styles.container, styles.tabBarContainer]}
-                onLayout={getTabBarHeight}
-                pointerEvents="box-none"
-              >
-                {renderTabBar &&
-                  renderTabBar({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    onTabPress,
-                    tabProps,
-                  })}
-              </View>
+                <View
+                  style={[styles.container, styles.headerContainer]}
+                  onLayout={getHeaderHeight}
+                  pointerEvents="box-none"
+                >
+                  {renderHeader &&
+                    renderHeader({
+                      containerRef,
+                      index,
+                      tabNames: tabNamesArray,
+                      focusedTab,
+                      indexDecimal,
+                      onTabPress,
+                      tabProps,
+                    })}
+                </View>
+                <View
+                  style={[styles.container, styles.tabBarContainer]}
+                  onLayout={getTabBarHeight}
+                  pointerEvents="box-none"
+                >
+                  {renderTabBar &&
+                    renderTabBar({
+                      containerRef,
+                      index,
+                      tabNames: tabNamesArray,
+                      focusedTab,
+                      indexDecimal,
+                      onTabPress,
+                      tabProps,
+                    })}
+                </View>
+              </Animated.View>
+              {headerHeight !== undefined && (
+                <AnimatedFlatList
+                  // @ts-expect-error problem with reanimated types, they're missing `ref`
+                  ref={containerRef}
+                  initialScrollIndex={index.value}
+                  data={data}
+                  keyExtractor={keyExtractor}
+                  renderItem={renderItem}
+                  horizontal
+                  pagingEnabled
+                  onScroll={scrollHandlerX}
+                  showsHorizontalScrollIndicator={false}
+                  getItemLayout={getItemLayout}
+                  scrollEventThrottle={16}
+                  alwaysBounceVertical={false}
+                  bounces={false}
+                  {...pagerProps}
+                  scrollEnabled={isScrollFree && pagerProps?.scrollEnabled}
+                  style={[pagerStylez, pagerProps?.style]}
+                />
+              )}
             </Animated.View>
-            {headerHeight !== undefined && (
-              <AnimatedFlatList
-                // @ts-expect-error problem with reanimated types, they're missing `ref`
-                ref={containerRef}
-                initialScrollIndex={index.value}
-                data={data}
-                keyExtractor={keyExtractor}
-                renderItem={renderItem}
-                horizontal
-                pagingEnabled
-                onScroll={scrollHandlerX}
-                showsHorizontalScrollIndicator={false}
-                getItemLayout={getItemLayout}
-                scrollEventThrottle={16}
-                bounces={false}
-                {...pagerProps}
-                style={[pagerStylez, pagerProps?.style]}
-              />
-            )}
-          </Animated.View>
+          </PanGestureHandler>
         </Context.Provider>
       )
     }
