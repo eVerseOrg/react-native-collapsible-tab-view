@@ -15,9 +15,11 @@ import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
+  withDecay,
   withDelay,
   withTiming,
 } from 'react-native-reanimated'
+import { bool } from 'yup'
 
 import { Context, TabNameContext } from './Context'
 import { Lazy } from './Lazy'
@@ -121,11 +123,12 @@ export const Container = React.memo(
       const accDiffClamp: ContextType['accDiffClamp'] = useSharedValue(0)
       const isScrolling: ContextType['isScrolling'] = useSharedValue(0)
       const scrollYCurrent: ContextType['scrollYCurrent'] = useSharedValue(0)
+      const tempYAnimation: ContextType['tempYAnimation'] = useSharedValue(0)
+
       const scrollY: ContextType['scrollY'] = useSharedValue(
         tabNamesArray.map(() => 0),
         false
       )
-
       const contentHeights: ContextType['contentHeights'] = useSharedValue(
         tabNamesArray.map(() => 0),
         false
@@ -149,7 +152,8 @@ export const Container = React.memo(
         false
       )
       const [data, setData] = React.useState(tabNamesArray)
-      const [isScrollFree, setIsScrollFree] = React.useState<boolean>(false)
+
+      const shouldAnimateScroll = useSharedValue<boolean>(false)
 
       React.useEffect(() => {
         setData(tabNamesArray)
@@ -446,17 +450,76 @@ export const Container = React.memo(
 
       const dragGestureHandler = useAnimatedGestureHandler(
         {
-          onStart: (event, context) => {
-            console.log('ON GESTURE START', event.translationY)
+          onStart: (_, context: { startY: number }) => {
+            // set initial scroll position here
+            console.log(
+              'INITIAL VALUIE',
+              scrollYCurrent.value,
+              headerTranslateY.value
+            )
+            context.startY = -scrollYCurrent.value
           },
-          onActive: (event, context) => {
-            console.log('ON GESTURE ACTIVE', event.translationY)
+          onActive: (event, context: { startY: number }) => {
+            const actualTranslationY = context.startY + event.translationY
+            // console.log('ON GESTURE ACTIVE', event.translationY, actualTranslationY)
+
+            if (event.translationY < 0) {
+              // scroll list direction
+              scrollYCurrent.value = -actualTranslationY
+              scrollY.value[index.value] = scrollYCurrent.value
+              scrollToImpl(
+                refMap['HomeFeed'],
+                0,
+                scrollY.value[index.value] - contentInset.value,
+                false
+              )
+            } else {
+              // pull to refresh direction
+              scrollYCurrent.value = -actualTranslationY
+              scrollY.value[index.value] = scrollYCurrent.value
+            }
+            // scrollY.value[index.value] = event.translationY
           },
           onEnd: (event, context) => {
+            shouldAnimateScroll.value = true
+            // scrollY.value[index.value] =
+            tempYAnimation.value = scrollYCurrent.value
+            tempYAnimation.value = withDecay(
+              { velocity: -event.velocityY, deceleration: 0.998 },
+              () => {
+                console.log(
+                  'ANIMATION COMPLETED',
+                  scrollYCurrent.value,
+                  tempYAnimation.value
+                )
+                scrollY.value[index.value] = tempYAnimation.value
+                scrollYCurrent.value = tempYAnimation.value
+                shouldAnimateScroll.value = false
+              }
+            )
+            // scrollYCurrent.value = 1
             console.log('ON GESTURE END', event.translationY)
           },
         },
-        []
+        [refMap, headerTranslateY]
+      )
+
+      useAnimatedReaction(
+        () => {
+          return tempYAnimation.value
+        },
+        (value) => {
+          // console.log('SHOULD ANIAMTE SCROLL TO', value)
+          if (shouldAnimateScroll.value) {
+            scrollToImpl(
+              refMap['HomeFeed'],
+              0,
+              value - contentInset.value,
+              false
+            )
+          }
+        },
+        [contentInset, tempYAnimation, shouldAnimateScroll, index, refMap]
       )
 
       return (
@@ -475,6 +538,7 @@ export const Container = React.memo(
             indexDecimal,
             containerHeight,
             scrollYCurrent,
+            tempYAnimation,
             scrollY,
             setRef,
             headerScrollDistance,
@@ -554,7 +618,6 @@ export const Container = React.memo(
                   alwaysBounceVertical={false}
                   bounces={false}
                   {...pagerProps}
-                  scrollEnabled={isScrollFree && pagerProps?.scrollEnabled}
                   style={[pagerStylez, pagerProps?.style]}
                 />
               )}

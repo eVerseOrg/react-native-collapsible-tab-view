@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FlatList as RNFlatList, FlatListProps } from 'react-native'
+import Animated, { runOnJS, useAnimatedReaction } from 'react-native-reanimated'
 
 import { AnimatedFlatList, IS_IOS } from './helpers'
 import {
@@ -12,7 +13,6 @@ import {
   useTabsContext,
   useUpdateScrollViewContentSize,
 } from './hooks'
-import Animated from 'react-native-reanimated'
 
 /**
  * Used as a memo to prevent rerendering too often when the context changes.
@@ -48,8 +48,9 @@ function FlatListImpl<R>(
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
-  const { setRef, contentInset, scrollYCurrent } = useTabsContext()
+  const { setRef, contentInset, scrollY, scrollYCurrent } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
+  const [canScroll, setCanScroll] = useState<boolean>(false)
 
   const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY)
   useAfterMountEffect(() => {
@@ -108,12 +109,30 @@ function FlatListImpl<R>(
   )
   const memoStyle = React.useMemo(() => [_style, style], [_style, style])
 
+  useAnimatedReaction(
+    () => {
+      return scrollYCurrent.value
+    },
+    (y) => {
+      // console.log('Y', y)
+      const newCanScroll = y > 0
+      if (canScroll !== newCanScroll) {
+        runOnJS(setCanScroll)(newCanScroll)
+        runOnJS(enable)(newCanScroll)
+      }
+    },
+    [canScroll]
+  )
+
+  console.log('IS SCROLL FREE', canScroll)
+
   return (
     // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
     <FlatListMemo
       {...rest}
       ref={ref}
       bouncesZoom={false}
+      bounces={false}
       style={memoStyle}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
@@ -124,6 +143,7 @@ function FlatListImpl<R>(
       contentOffset={memoContentOffset}
       automaticallyAdjustContentInsets={false}
       refreshControl={memoRefreshControl}
+      scrollEnabled={rest.scrollEnabled && canScroll}
     />
   )
 }

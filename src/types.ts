@@ -169,6 +169,12 @@ export type ContextType<T extends TabName = TabName> = {
    * Scroll position of current tab.
    */
   scrollYCurrent: Animated.SharedValue<number>
+
+  /**
+   * Temp scroll position for a transition from pull to refresh handler to a common scroll
+   */
+  tempYAnimation: Animated.SharedValue<number>
+
   /**
    * Array of the scroll y position of each tab.
    */

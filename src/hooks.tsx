@@ -5,7 +5,8 @@ import {
   useCallback,
   useContext,
   MutableRefObject,
-  useEffect, useRef,
+  useEffect,
+  useRef,
 } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { ContainerRef, RefComponent } from 'react-native-collapsible-tab-view'
@@ -212,7 +213,10 @@ export function useScroller<T extends RefComponent>() {
   return scroller
 }
 
-export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.SharedValue<number>) => {
+export const useScrollHandlerY = (
+  name: TabName,
+  externalScrollY?: Animated.SharedValue<number>
+) => {
   const {
     accDiffClamp,
     focusedTab,
@@ -225,6 +229,7 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
     contentInset,
     containerHeight,
     scrollYCurrent,
+    tempYAnimation,
     scrollY,
     isScrolling,
     isGliding,
@@ -263,6 +268,7 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
 
   const onMomentumEnd = () => {
     'worklet'
+    console.log('ON MOMENTUM END HOOK')
     if (!enabled.value) return
 
     if (typeof snapThreshold === 'number') {
@@ -344,6 +350,8 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
       onScroll: (event) => {
         if (!enabled.value) return
 
+        console.log('ON SCROLL HOOK', event.contentOffset)
+
         if (focusedTab.value === name) {
           if (IS_IOS) {
             let { y } = event.contentOffset
@@ -403,7 +411,10 @@ export const useScrollHandlerY = (name: TabName, externalScrollY?: Animated.Shar
         }
       },
       onBeginDrag: () => {
+        console.log('ON BEGIN DRAG')
         if (!enabled.value) return
+
+        cancelAnimation(tempYAnimation)
 
         // ensure the header stops snapping
         cancelAnimation(accDiffClamp)
