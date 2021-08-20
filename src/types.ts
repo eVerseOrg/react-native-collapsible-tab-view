@@ -52,7 +52,7 @@ export type OnTabChangeCallback<T extends TabName = TabName> = (
 
 export type TabReactElement<T extends TabName = TabName> = React.ReactElement<
   TabProps<T>
->
+  >
 
 export type CollapsibleProps = {
   initialTabName?: TabName
@@ -68,6 +68,14 @@ export type CollapsibleProps = {
    * Header minimum height when collapsed
    */
   minHeaderHeight?: number
+  /**
+   * Height requiered to trigger the refresh
+   */
+  pullToRefreshHeight: number
+  /**
+   * If any of tabs is refreshing
+   */
+  isRefreshing: boolean | undefined
   /**
    * Reveal header when scrolling down. Implements diffClamp.
    */
@@ -85,8 +93,8 @@ export type CollapsibleProps = {
   HeaderComponent?:
     | ((props: TabBarProps<TabName>) => React.ReactElement)
     | React.MemoExoticComponent<
-        (props: TabBarProps<TabName>) => React.ReactElement
-      >
+    (props: TabBarProps<TabName>) => React.ReactElement
+    >
     | null
   /**
    * @obsolete use `renderTabBar` instead. This property will be removed in 5.0.0
@@ -94,8 +102,8 @@ export type CollapsibleProps = {
   TabBarComponent?:
     | ((props: TabBarProps<TabName>) => React.ReactElement)
     | React.MemoExoticComponent<
-        (props: TabBarProps<TabName>) => React.ReactElement
-      >
+    (props: TabBarProps<TabName>) => React.ReactElement
+    >
     | null
 
   renderHeader?: (props: TabBarProps<TabName>) => React.ReactElement | null
@@ -125,7 +133,7 @@ export type CollapsibleProps = {
     | 'onScroll'
     | 'showsHorizontalScrollIndicator'
     | 'getItemLayout'
-  >
+    >
   /**
    * Callback fired when the index changes. It receives the current index.
    */
@@ -244,4 +252,4 @@ export type CollapsibleStyle = {
 export type TabsWithProps<T extends TabName = TabName> = Map<
   T,
   Omit<TabProps<T>, 'children'> & { index: number }
->
+  >

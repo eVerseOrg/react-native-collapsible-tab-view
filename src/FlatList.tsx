@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FlatList as RNFlatList, FlatListProps } from 'react-native'
-import Animated, { runOnJS, useAnimatedReaction } from 'react-native-reanimated'
+import Animated, {runOnJS, useAnimatedReaction, useAnimatedStyle} from 'react-native-reanimated'
 
 import { AnimatedFlatList, IS_IOS } from './helpers'
 import {
@@ -48,7 +48,7 @@ function FlatListImpl<R>(
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
-  const { setRef, contentInset, scrollY, scrollYCurrent } = useTabsContext()
+  const { headerTranslateY, setRef, contentInset, scrollYCurrent } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
   const [canScroll, setCanScroll] = useState<boolean>(false)
 
@@ -56,7 +56,7 @@ function FlatListImpl<R>(
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
     // otherwise we get an `onScroll` call with the initial scroll position which can break things
-    enable(true)
+    // enable(true)
   })
 
   const {
@@ -91,7 +91,7 @@ function FlatListImpl<R>(
   )
   const memoContentOffset = React.useMemo(
     () => ({
-      y: IS_IOS ? -contentInset.value + scrollYCurrent.value : 0,
+      y: IS_IOS ? -contentInset.value : 0,
       x: 0,
     }),
     [contentInset.value, scrollYCurrent.value]
@@ -114,7 +114,6 @@ function FlatListImpl<R>(
       return scrollYCurrent.value
     },
     (y) => {
-      // console.log('Y', y)
       const newCanScroll = y > 0
       if (canScroll !== newCanScroll) {
         runOnJS(setCanScroll)(newCanScroll)
@@ -124,7 +123,11 @@ function FlatListImpl<R>(
     [canScroll]
   )
 
-  console.log('IS SCROLL FREE', canScroll)
+  const offsetStyle = useAnimatedStyle(() => {
+    return {
+      paddingTop: headerTranslateY.value,
+    }
+  }, [headerTranslateY])
 
   return (
     // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
@@ -133,7 +136,7 @@ function FlatListImpl<R>(
       ref={ref}
       bouncesZoom={false}
       bounces={false}
-      style={memoStyle}
+      style={[memoStyle, offsetStyle]}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
       onScroll={scrollHandler}

@@ -49,11 +49,11 @@ export function useAnimatedDynamicRefs(): [
   const setRef = useCallback(function <T extends RefComponent>(
     key: TabName,
     ref: React.RefObject<T>
-  ) {
-    setMap((map) => ({ ...map, [key]: ref }))
-    return ref
-  },
-  [])
+    ) {
+      setMap((map) => ({ ...map, [key]: ref }))
+      return ref
+    },
+    [])
 
   return [map, setRef]
 }
@@ -74,13 +74,14 @@ export function useTabProps<T extends TabName>(
           )
 
         // make sure children is excluded otherwise our props will mutate too much
-        const { name, children, ...options } = element.props
+        const { name, children, onRefresh, ...options } = element.props
         if (tabOptions.has(name))
           throw new Error(`Tab names must be unique, ${name} already exists`)
 
         tabOptions.set(name, {
           index,
           name,
+          onRefresh,
           ...options,
         })
       })
@@ -133,6 +134,7 @@ export function useCollapsibleStyle(): CollapsibleStyle {
     useConvertAnimatedToValue(tabBarHeight),
     useConvertAnimatedToValue(headerHeight),
   ]
+
   return useMemo(
     () => ({
       style: { width: windowWidth },
@@ -268,7 +270,6 @@ export const useScrollHandlerY = (
 
   const onMomentumEnd = () => {
     'worklet'
-    console.log('ON MOMENTUM END HOOK')
     if (!enabled.value) return
 
     if (typeof snapThreshold === 'number') {
@@ -350,8 +351,6 @@ export const useScrollHandlerY = (
       onScroll: (event) => {
         if (!enabled.value) return
 
-        console.log('ON SCROLL HOOK', event.contentOffset)
-
         if (focusedTab.value === name) {
           if (IS_IOS) {
             let { y } = event.contentOffset
@@ -411,7 +410,6 @@ export const useScrollHandlerY = (
         }
       },
       onBeginDrag: () => {
-        console.log('ON BEGIN DRAG')
         if (!enabled.value) return
 
         cancelAnimation(tempYAnimation)

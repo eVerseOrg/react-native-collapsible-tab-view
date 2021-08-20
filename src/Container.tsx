@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {
   LayoutChangeEvent,
   StyleSheet,
@@ -7,6 +7,8 @@ import {
 } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated, {
+  Extrapolate,
+  interpolate,
   runOnJS,
   runOnUI,
   useAnimatedGestureHandler,
@@ -19,7 +21,6 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated'
-import { bool } from 'yup'
 
 import { Context, TabNameContext } from './Context'
 import { Lazy } from './Lazy'
@@ -68,6 +69,8 @@ export const Container = React.memo(
         initialTabName,
         headerHeight: initialHeaderHeight,
         minHeaderHeight = 0,
+        pullToRefreshHeight = 0,
+        isRefreshing = false,
         tabBarHeight: initialTabBarHeight = TABBAR_HEIGHT,
         revealHeaderOnScroll = false,
         snapThreshold,
@@ -138,6 +141,7 @@ export const Container = React.memo(
         () => tabNamesArray,
         [tabNamesArray]
       )
+
       const index: ContextType['index'] = useSharedValue(
         initialTabName
           ? tabNames.value.findIndex((n) => n === initialTabName)
@@ -448,78 +452,94 @@ export const Container = React.memo(
         [onTabPress]
       )
 
+      const refreshCurrentTab = useCallback(() => {
+        const currentTab = tabProps.get(focusedTab.value)
+        currentTab?.onRefresh()
+      }, [tabProps, focusedTab])
+
       const dragGestureHandler = useAnimatedGestureHandler(
         {
           onStart: (_, context: { startY: number }) => {
-            // set initial scroll position here
-            console.log(
-              'INITIAL VALUIE',
-              scrollYCurrent.value,
-              headerTranslateY.value
-            )
             context.startY = -scrollYCurrent.value
           },
           onActive: (event, context: { startY: number }) => {
             const actualTranslationY = context.startY + event.translationY
-            // console.log('ON GESTURE ACTIVE', event.translationY, actualTranslationY)
-
             if (event.translationY < 0) {
               // scroll list direction
               scrollYCurrent.value = -actualTranslationY
               scrollY.value[index.value] = scrollYCurrent.value
               scrollToImpl(
-                refMap['HomeFeed'],
+                refMap[focusedTab.value],
                 0,
                 scrollY.value[index.value] - contentInset.value,
                 false
               )
             } else {
               // pull to refresh direction
-              scrollYCurrent.value = -actualTranslationY
+              // scrollYCurrent.value = -actualTranslationY
+              scrollYCurrent.value = interpolate(
+                -actualTranslationY,
+                [0, -pullToRefreshHeight],
+                [0, -pullToRefreshHeight],
+                Extrapolate.CLAMP
+              )
               scrollY.value[index.value] = scrollYCurrent.value
             }
-            // scrollY.value[index.value] = event.translationY
           },
-          onEnd: (event, context) => {
-            shouldAnimateScroll.value = true
-            // scrollY.value[index.value] =
-            tempYAnimation.value = scrollYCurrent.value
-            tempYAnimation.value = withDecay(
-              { velocity: -event.velocityY, deceleration: 0.998 },
-              () => {
-                console.log(
-                  'ANIMATION COMPLETED',
-                  scrollYCurrent.value,
-                  tempYAnimation.value
-                )
-                scrollY.value[index.value] = tempYAnimation.value
-                scrollYCurrent.value = tempYAnimation.value
-                shouldAnimateScroll.value = false
+          onEnd: (event) => {
+            if (event.translationY < 0) {
+              // common scroll
+              shouldAnimateScroll.value = true
+              // scrollY.value[index.value] =
+              tempYAnimation.value = scrollYCurrent.value
+              tempYAnimation.value = withDecay(
+                { velocity: -event.velocityY, deceleration: 0.998 },
+                () => {
+                  scrollY.value[index.value] = tempYAnimation.value
+                  scrollYCurrent.value = tempYAnimation.value
+                  shouldAnimateScroll.value = false
+                }
+              )
+            } else {
+              if (event.translationY - pullToRefreshHeight > 0) {
+                // pull to refresh
+                runOnJS(refreshCurrentTab)()
+              } else {
+                // jump back to a position
+                scrollYCurrent.value = withTiming(0);
+                scrollY.value[index.value] = withTiming(0);
               }
-            )
-            // scrollYCurrent.value = 1
-            console.log('ON GESTURE END', event.translationY)
+            }
           },
         },
-        [refMap, headerTranslateY]
+        [refMap, focusedTab, headerTranslateY, tabProps, refreshCurrentTab, contentInset]
       )
+
+      useEffect(()=> {
+        if (!isRefreshing) {
+          scrollYCurrent.value = withTiming(0, {duration: 500})
+          scrollY.value[index.value] = withTiming(0, {duration: 500})
+        } else {
+          scrollYCurrent.value = withTiming(-pullToRefreshHeight, { duration: 500} )
+          scrollY.value[index.value] = withTiming(-pullToRefreshHeight, { duration: 500} )
+        }
+      }, [isRefreshing, scrollYCurrent, scrollY, index, contentInset])
 
       useAnimatedReaction(
         () => {
           return tempYAnimation.value
         },
         (value) => {
-          // console.log('SHOULD ANIAMTE SCROLL TO', value)
           if (shouldAnimateScroll.value) {
             scrollToImpl(
-              refMap['HomeFeed'],
+              refMap[focusedTab.value],
               0,
               value - contentInset.value,
               false
             )
           }
         },
-        [contentInset, tempYAnimation, shouldAnimateScroll, index, refMap]
+        [focusedTab, contentInset, tempYAnimation, shouldAnimateScroll, refMap]
       )
 
       return (
@@ -574,15 +594,15 @@ export const Container = React.memo(
                   pointerEvents="box-none"
                 >
                   {renderHeader &&
-                    renderHeader({
-                      containerRef,
-                      index,
-                      tabNames: tabNamesArray,
-                      focusedTab,
-                      indexDecimal,
-                      onTabPress,
-                      tabProps,
-                    })}
+                  renderHeader({
+                    containerRef,
+                    index,
+                    tabNames: tabNamesArray,
+                    focusedTab,
+                    indexDecimal,
+                    onTabPress,
+                    tabProps,
+                  })}
                 </View>
                 <View
                   style={[styles.container, styles.tabBarContainer]}
@@ -590,15 +610,15 @@ export const Container = React.memo(
                   pointerEvents="box-none"
                 >
                   {renderTabBar &&
-                    renderTabBar({
-                      containerRef,
-                      index,
-                      tabNames: tabNamesArray,
-                      focusedTab,
-                      indexDecimal,
-                      onTabPress,
-                      tabProps,
-                    })}
+                  renderTabBar({
+                    containerRef,
+                    index,
+                    tabNames: tabNamesArray,
+                    focusedTab,
+                    indexDecimal,
+                    onTabPress,
+                    tabProps,
+                  })}
                 </View>
               </Animated.View>
               {headerHeight !== undefined && (

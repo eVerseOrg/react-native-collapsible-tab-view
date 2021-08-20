@@ -5,6 +5,7 @@ import { TabName } from './types'
 export type TabProps<T extends TabName> = {
   readonly name: T
   label?: string
+  onRefresh: () => void
   children: React.ReactNode
 }
 
