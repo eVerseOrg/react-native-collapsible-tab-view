@@ -217,7 +217,9 @@ export function useScroller<T extends RefComponent>() {
 
 export const useScrollHandlerY = (
   name: TabName,
-  externalScrollY?: Animated.SharedValue<number>
+  externalScrollY?: Animated.SharedValue<number>,
+  onEndReached?: ((info: { distanceFromEnd: number }) => void) | null,
+  onEndReachedThreshold?: number | null,
 ) => {
   const {
     accDiffClamp,
@@ -377,6 +379,14 @@ export const useScrollHandlerY = (
               externalScrollY.value = y
             }
           }
+
+          if (onEndReached && onEndReachedThreshold) {
+            const distance = event.contentSize.height - event.contentOffset.y - event.layoutMeasurement.height
+            if (distance < onEndReachedThreshold) {
+              runOnJS(onEndReached)({ distanceFromEnd: distance })
+            }
+          }
+
 
           scrollY.value[index.value] = scrollYCurrent.value
           oldAccScrollY.value = accScrollY.value

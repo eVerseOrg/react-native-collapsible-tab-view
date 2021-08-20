@@ -43,6 +43,8 @@ function FlatListImpl<R>(
     onContentSizeChange,
     externalScrollY,
     refreshControl,
+    onEndReachedThreshold,
+    onEndReached,
     ...rest
   }: Omit<FlatListCustomProps<R>, 'onScroll'>,
   passRef: React.Ref<RNFlatList>
@@ -52,7 +54,7 @@ function FlatListImpl<R>(
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
   const [canScroll, setCanScroll] = useState<boolean>(false)
 
-  const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY)
+  const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY, onEndReached, onEndReachedThreshold)
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
     // otherwise we get an `onScroll` call with the initial scroll position which can break things
