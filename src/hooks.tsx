@@ -6,7 +6,6 @@ import {
   useContext,
   MutableRefObject,
   useEffect,
-  useRef,
 } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { ContainerRef, RefComponent } from 'react-native-collapsible-tab-view'
@@ -49,11 +48,11 @@ export function useAnimatedDynamicRefs(): [
   const setRef = useCallback(function <T extends RefComponent>(
     key: TabName,
     ref: React.RefObject<T>
-    ) {
-      setMap((map) => ({ ...map, [key]: ref }))
-      return ref
-    },
-    [])
+  ) {
+    setMap((map) => ({ ...map, [key]: ref }))
+    return ref
+  },
+  [])
 
   return [map, setRef]
 }
@@ -219,7 +218,7 @@ export const useScrollHandlerY = (
   name: TabName,
   externalScrollY?: Animated.SharedValue<number>,
   onEndReached?: ((info: { distanceFromEnd: number }) => void) | null,
-  onEndReachedThreshold?: number | null,
+  onEndReachedThreshold?: number | null
 ) => {
   const {
     accDiffClamp,
@@ -381,12 +380,14 @@ export const useScrollHandlerY = (
           }
 
           if (onEndReached && onEndReachedThreshold) {
-            const distance = event.contentSize.height - event.contentOffset.y - event.layoutMeasurement.height
+            const distance =
+              event.contentSize.height -
+              event.contentOffset.y -
+              event.layoutMeasurement.height
             if (distance < onEndReachedThreshold) {
               runOnJS(onEndReached)({ distanceFromEnd: distance })
             }
           }
-
 
           scrollY.value[index.value] = scrollYCurrent.value
           oldAccScrollY.value = accScrollY.value
@@ -473,6 +474,8 @@ export const useScrollHandlerY = (
       enabled,
       scrollTo,
       externalScrollY,
+      onEndReached,
+      onEndReachedThreshold,
     ]
   )
 
