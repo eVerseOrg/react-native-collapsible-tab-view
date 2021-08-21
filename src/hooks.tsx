@@ -245,6 +245,12 @@ export const useScrollHandlerY = (
     contentHeights,
   } = useTabsContext()
 
+  const onEndReachedSent = useSharedValue(false)
+
+  const cleanOnEndReachedSent = () => {
+    onEndReachedSent.value = false
+  }
+
   const enabled = useSharedValue(false)
 
   const enable = useCallback(
@@ -384,8 +390,10 @@ export const useScrollHandlerY = (
               event.contentSize.height -
               event.contentOffset.y -
               event.layoutMeasurement.height
-            if (distance < onEndReachedThreshold) {
+            if (distance < onEndReachedThreshold && !onEndReachedSent.value) {
+              onEndReachedSent.value = true
               runOnJS(onEndReached)({ distanceFromEnd: distance })
+              runOnJS(setTimeout)(cleanOnEndReachedSent, 1000)
             }
           }
 
