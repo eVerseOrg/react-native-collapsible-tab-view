@@ -113,10 +113,10 @@ function FlatListImpl<R>(
 
   useAnimatedReaction(
     () => {
-      return scrollYCurrent.value
+      return { y: scrollYCurrent.value, externalY: externalScrollY?.value }
     },
-    (y) => {
-      const newCanScroll = y > 0
+    ({y, externalY}) => {
+      const newCanScroll = y > 0 || (externalY !== undefined && externalY > 0)
       if (canScroll !== newCanScroll) {
         runOnJS(setCanScroll)(newCanScroll)
         runOnJS(enable)(newCanScroll)
