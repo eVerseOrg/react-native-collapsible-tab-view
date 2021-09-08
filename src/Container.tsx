@@ -493,7 +493,7 @@ export const Container = React.memo(
               // scrollY.value[index.value] =
               tempYAnimation.value = scrollYCurrent.value
               tempYAnimation.value = withDecay(
-                { velocity: -event.velocityY, deceleration: 0.998 },
+                { velocity: -event.velocityY, deceleration: 0.9993 },
                 () => {
                   scrollY.value[index.value] = tempYAnimation.value
                   scrollYCurrent.value = tempYAnimation.value
