@@ -578,7 +578,7 @@ export const Container = React.memo(
             <Animated.View
               style={[styles.container, containerStyle]}
               onLayout={onLayout}
-              pointerEvents="box-none"
+              pointerEvents={pagerProps?.scrollEnabled === false ? 'none' : 'box-none'}
             >
               <Animated.View
                 pointerEvents="box-none"
