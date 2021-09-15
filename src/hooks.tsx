@@ -245,6 +245,7 @@ export const useScrollHandlerY = (
     contentHeights,
   } = useTabsContext()
 
+  const ON_END_REACHED_DEBOUNCE = 2000;
   const onEndReachedSent = useSharedValue(false)
 
   const cleanOnEndReachedSent = () => {
@@ -393,7 +394,7 @@ export const useScrollHandlerY = (
             if (distance < onEndReachedThreshold && !onEndReachedSent.value) {
               onEndReachedSent.value = true
               runOnJS(onEndReached)({ distanceFromEnd: distance })
-              runOnJS(setTimeout)(cleanOnEndReachedSent, 1000)
+              runOnJS(setTimeout)(cleanOnEndReachedSent, ON_END_REACHED_DEBOUNCE)
             }
           }
 
