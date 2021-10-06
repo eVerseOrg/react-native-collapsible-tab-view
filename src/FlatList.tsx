@@ -148,7 +148,7 @@ function FlatListImpl<R>(
       contentOffset={memoContentOffset}
       automaticallyAdjustContentInsets={false}
       refreshControl={memoRefreshControl}
-      scrollEnabled={rest.scrollEnabled && canScroll}
+      scrollEnabled={rest.scrollEnabled !== false && canScroll}
     />
   )
 }
