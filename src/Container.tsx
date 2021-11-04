@@ -464,7 +464,7 @@ export const Container = React.memo(
           },
           onActive: (event, context: { startY: number }) => {
             const actualTranslationY = context.startY + event.translationY
-            if (event.translationY < 0) {
+            if (event.translationY < 0 || actualTranslationY < 0) {
               // scroll list direction
               scrollYCurrent.value = -actualTranslationY
               scrollY.value[index.value] = scrollYCurrent.value
@@ -486,7 +486,7 @@ export const Container = React.memo(
               scrollY.value[index.value] = scrollYCurrent.value
             }
           },
-          onEnd: (event) => {
+          onEnd: (event, context: { startY: number }) => {
             if (event.translationY < 0) {
               // common scroll
               shouldAnimateScroll.value = true
@@ -501,13 +501,16 @@ export const Container = React.memo(
                 }
               )
             } else {
-              if (event.translationY - pullToRefreshHeight > 0) {
-                // pull to refresh
-                runOnJS(refreshCurrentTab)()
-              } else {
-                // jump back to a position
-                scrollYCurrent.value = withTiming(0);
-                scrollY.value[index.value] = withTiming(0);
+              const actualTranslationY = context.startY + event.translationY
+              if (actualTranslationY >= 0) {
+                if (event.translationY - pullToRefreshHeight > 0) {
+                  // pull to refresh
+                  runOnJS(refreshCurrentTab)()
+                } else {
+                  // jump back to a position
+                  scrollYCurrent.value = withTiming(0);
+                  scrollY.value[index.value] = withTiming(0);
+                }
               }
             }
           },
