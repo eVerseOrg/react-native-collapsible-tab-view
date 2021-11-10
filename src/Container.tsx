@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react'
+import React, { useCallback, useEffect } from 'react'
 import {
   LayoutChangeEvent,
   StyleSheet,
@@ -465,6 +465,13 @@ export const Container = React.memo(
           onActive: (event, context: { startY: number }) => {
             const actualTranslationY = context.startY + event.translationY
             if (event.translationY < 0 || actualTranslationY < 0) {
+              if (
+                !containerHeight.value ||
+                contentHeights.value[index.value] <= containerHeight.value
+              ) {
+                // nothing to scroll
+                return
+              }
               // scroll list direction
               scrollYCurrent.value = -actualTranslationY
               scrollY.value[index.value] = scrollYCurrent.value
@@ -488,6 +495,14 @@ export const Container = React.memo(
           },
           onEnd: (event, context: { startY: number }) => {
             if (event.translationY < 0) {
+              if (
+                !containerHeight.value ||
+                contentHeights.value[index.value] <= containerHeight.value
+              ) {
+                // nothing to scroll
+                return
+              }
+
               // common scroll
               shouldAnimateScroll.value = true
               // scrollY.value[index.value] =
@@ -508,23 +523,37 @@ export const Container = React.memo(
                   runOnJS(refreshCurrentTab)()
                 } else {
                   // jump back to a position
-                  scrollYCurrent.value = withTiming(0);
-                  scrollY.value[index.value] = withTiming(0);
+                  scrollYCurrent.value = withTiming(0)
+                  scrollY.value[index.value] = withTiming(0)
                 }
               }
             }
           },
         },
-        [refMap, focusedTab, headerTranslateY, tabProps, refreshCurrentTab, contentInset]
+        [
+          refMap,
+          focusedTab,
+          headerTranslateY,
+          tabProps,
+          refreshCurrentTab,
+          contentInset,
+          contentHeights,
+          index,
+          containerHeight,
+        ]
       )
 
-      useEffect(()=> {
+      useEffect(() => {
         if (!isRefreshing) {
-          scrollYCurrent.value = withTiming(0, {duration: 500})
-          scrollY.value[index.value] = withTiming(0, {duration: 500})
+          scrollYCurrent.value = withTiming(0, { duration: 500 })
+          scrollY.value[index.value] = withTiming(0, { duration: 500 })
         } else {
-          scrollYCurrent.value = withTiming(-pullToRefreshHeight, { duration: 500} )
-          scrollY.value[index.value] = withTiming(-pullToRefreshHeight, { duration: 500} )
+          scrollYCurrent.value = withTiming(-pullToRefreshHeight, {
+            duration: 500,
+          })
+          scrollY.value[index.value] = withTiming(-pullToRefreshHeight, {
+            duration: 500,
+          })
         }
       }, [isRefreshing, scrollYCurrent, scrollY, index, contentInset])
 
@@ -581,7 +610,9 @@ export const Container = React.memo(
             <Animated.View
               style={[styles.container, containerStyle]}
               onLayout={onLayout}
-              pointerEvents={pagerProps?.scrollEnabled === false ? 'none' : 'box-none'}
+              pointerEvents={
+                pagerProps?.scrollEnabled === false ? 'none' : 'box-none'
+              }
             >
               <Animated.View
                 pointerEvents="box-none"
@@ -597,15 +628,15 @@ export const Container = React.memo(
                   pointerEvents="box-none"
                 >
                   {renderHeader &&
-                  renderHeader({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    onTabPress,
-                    tabProps,
-                  })}
+                    renderHeader({
+                      containerRef,
+                      index,
+                      tabNames: tabNamesArray,
+                      focusedTab,
+                      indexDecimal,
+                      onTabPress,
+                      tabProps,
+                    })}
                 </View>
                 <View
                   style={[styles.container, styles.tabBarContainer]}
@@ -613,15 +644,15 @@ export const Container = React.memo(
                   pointerEvents="box-none"
                 >
                   {renderTabBar &&
-                  renderTabBar({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    onTabPress,
-                    tabProps,
-                  })}
+                    renderTabBar({
+                      containerRef,
+                      index,
+                      tabNames: tabNamesArray,
+                      focusedTab,
+                      indexDecimal,
+                      onTabPress,
+                      tabProps,
+                    })}
                 </View>
               </Animated.View>
               {headerHeight !== undefined && (
