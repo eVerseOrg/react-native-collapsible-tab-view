@@ -1,6 +1,10 @@
 import React, { useState } from 'react'
 import { FlatList as RNFlatList, FlatListProps } from 'react-native'
-import Animated, {runOnJS, useAnimatedReaction, useAnimatedStyle} from 'react-native-reanimated'
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+} from 'react-native-reanimated'
 
 import { AnimatedFlatList, IS_IOS } from './helpers'
 import {
@@ -50,11 +54,25 @@ function FlatListImpl<R>(
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
-  const { headerTranslateY, setRef, contentInset, scrollYCurrent } = useTabsContext()
+  const {
+    containerHeight,
+    contentHeights,
+    contentInset,
+    headerTranslateY,
+    index,
+    setRef,
+    scrollYCurrent,
+    tabBarHeight,
+  } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
   const [canScroll, setCanScroll] = useState<boolean>(false)
 
-  const { scrollHandler, enable } = useScrollHandlerY(name, externalScrollY, onEndReached, onEndReachedThreshold)
+  const { scrollHandler, enable } = useScrollHandlerY(
+    name,
+    externalScrollY,
+    onEndReached,
+    onEndReachedThreshold
+  )
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
     // otherwise we get an `onScroll` call with the initial scroll position which can break things
@@ -115,8 +133,13 @@ function FlatListImpl<R>(
     () => {
       return { y: scrollYCurrent.value, externalY: externalScrollY?.value }
     },
-    ({y, externalY}) => {
-      const newCanScroll = y > 0 || (externalY !== undefined && externalY > 0)
+    ({ y, externalY }) => {
+      const isContentScrollable =
+        contentHeights.value[index.value] + (tabBarHeight.value || 0) >
+        (containerHeight.value || 0)
+      const newCanScroll =
+        (y > 0 || (externalY !== undefined && externalY > 0)) &&
+        isContentScrollable
       if (canScroll !== newCanScroll) {
         runOnJS(setCanScroll)(newCanScroll)
         runOnJS(enable)(newCanScroll)
