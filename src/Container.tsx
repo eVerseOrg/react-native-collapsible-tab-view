@@ -7,6 +7,7 @@ import {
 } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated, {
+  cancelAnimation,
   Extrapolate,
   interpolate,
   runOnJS,
@@ -157,7 +158,7 @@ export const Container = React.memo(
       )
       const [data, setData] = React.useState(tabNamesArray)
 
-      const shouldAnimateScroll = useSharedValue<boolean>(false)
+      const shouldAnimateScroll = useSharedValue<number>(0)
 
       React.useEffect(() => {
         setData(tabNamesArray)
@@ -460,18 +461,27 @@ export const Container = React.memo(
       const dragGestureHandler = useAnimatedGestureHandler(
         {
           onStart: (_, context: { startY: number }) => {
+            cancelAnimation(tempYAnimation)
             context.startY = -scrollYCurrent.value
           },
           onActive: (event, context: { startY: number }) => {
             const actualTranslationY = context.startY + event.translationY
             if (event.translationY < 0 || actualTranslationY < 0) {
-              if (
-                !containerHeight.value ||
-                contentHeights.value[index.value] <= containerHeight.value
-              ) {
-                // nothing to scroll
-                return
+              if (event.translationY < 0) {
+                const contentHeight = contentHeights.value[index.value]
+                const contentAndHeaderHeight =
+                  contentHeight +
+                  headerScrollDistance.value +
+                  (tabBarHeight.value || 0)
+                if (
+                  scrollYCurrent.value >=
+                  contentAndHeaderHeight - (containerHeight.value || 0)
+                ) {
+                  // nothing to scroll
+                  return
+                }
               }
+
               // scroll list direction
               scrollYCurrent.value = -actualTranslationY
               scrollY.value[index.value] = scrollYCurrent.value
@@ -493,40 +503,54 @@ export const Container = React.memo(
               scrollY.value[index.value] = scrollYCurrent.value
             }
           },
-          onEnd: (event, context: { startY: number }) => {
-            if (event.translationY < 0) {
-              if (
-                !containerHeight.value ||
-                contentHeights.value[index.value] <= containerHeight.value
-              ) {
+          onEnd: (event) => {
+            if (headerTranslateY.value > 0) {
+              if (headerTranslateY.value >= pullToRefreshHeight) {
+                // pull to refresh
+                runOnJS(refreshCurrentTab)()
+              } else {
+                // jump back to a position
+                scrollYCurrent.value = withTiming(0)
+                scrollY.value[index.value] = withTiming(0)
+              }
+            } else {
+              // common scroll (up or down)
+              const isContentScrollable =
+                contentHeights.value[index.value] + (tabBarHeight.value || 0) >
+                (containerHeight.value || 0)
+              const isScrollForward = event.velocityY <= 0
+              const canScrollHeader = isScrollForward
+                ? headerScrollDistance.value + headerTranslateY.value > 0
+                : headerTranslateY.value < 0
+              if (!isContentScrollable && !canScrollHeader) {
                 // nothing to scroll
                 return
               }
 
+              const contentHeight = contentHeights.value[index.value]
+              const contentAndHeaderHeight =
+                contentHeight +
+                headerScrollDistance.value +
+                (tabBarHeight.value || 0)
               // common scroll
-              shouldAnimateScroll.value = true
-              // scrollY.value[index.value] =
+              shouldAnimateScroll.value = 1
               tempYAnimation.value = scrollYCurrent.value
               tempYAnimation.value = withDecay(
-                { velocity: -event.velocityY, deceleration: 0.9993 },
+                {
+                  velocity: -event.velocityY,
+                  deceleration: 0.9993,
+                  clamp: [
+                    0,
+                    contentAndHeaderHeight - (containerHeight.value || 0),
+                  ],
+                },
                 () => {
-                  scrollY.value[index.value] = tempYAnimation.value
-                  scrollYCurrent.value = tempYAnimation.value
-                  shouldAnimateScroll.value = false
+                  shouldAnimateScroll.value = withDelay(
+                    50,
+                    withTiming(0, { duration: 0 })
+                  )
                 }
               )
-            } else {
-              const actualTranslationY = context.startY + event.translationY
-              if (actualTranslationY >= 0) {
-                if (event.translationY - pullToRefreshHeight > 0) {
-                  // pull to refresh
-                  runOnJS(refreshCurrentTab)()
-                } else {
-                  // jump back to a position
-                  scrollYCurrent.value = withTiming(0)
-                  scrollY.value[index.value] = withTiming(0)
-                }
-              }
             }
           },
         },
@@ -540,6 +564,7 @@ export const Container = React.memo(
           contentHeights,
           index,
           containerHeight,
+          minHeaderHeight,
         ]
       )
 
@@ -562,7 +587,9 @@ export const Container = React.memo(
           return tempYAnimation.value
         },
         (value) => {
-          if (shouldAnimateScroll.value) {
+          if (shouldAnimateScroll.value === 1) {
+            scrollYCurrent.value = value
+            scrollY.value[index.value] = scrollYCurrent.value
             scrollToImpl(
               refMap[focusedTab.value],
               0,
