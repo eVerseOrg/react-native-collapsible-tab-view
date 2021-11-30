@@ -18,6 +18,13 @@ export type Ref<T extends RefComponent> = React.RefObject<T>
 
 export type TabName = string | number
 
+export type Insets = {
+  top?: number;
+  left?: number;
+  bottom?: number;
+  right?: number;
+}
+
 export type RefHandler<T extends TabName = TabName> = {
   jumpToTab: (name: T) => boolean
   setIndex: (index: number) => boolean
@@ -76,6 +83,10 @@ export type CollapsibleProps = {
    * If any of tabs is refreshing
    */
   isRefreshing: boolean | undefined
+  /**
+   * Sets hitSlop
+   */
+  hitSlop: Insets | undefined
   /**
    * Reveal header when scrolling down. Implements diffClamp.
    */
@@ -253,3 +264,5 @@ export type TabsWithProps<T extends TabName = TabName> = Map<
   T,
   Omit<TabProps<T>, 'children'> & { index: number }
   >
+
+
