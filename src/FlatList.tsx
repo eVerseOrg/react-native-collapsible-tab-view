@@ -160,7 +160,7 @@ function FlatListImpl<R>(
       {...rest}
       ref={ref}
       bouncesZoom={false}
-      bounces={false}
+      bounces={true}
       style={[memoStyle, offsetStyle]}
       contentContainerStyle={memoContentContainerStyle}
       progressViewOffset={progressViewOffset}
