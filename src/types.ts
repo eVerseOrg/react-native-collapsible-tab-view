@@ -86,7 +86,7 @@ export type CollapsibleProps = {
   /**
    * Sets hitSlop
    */
-  hitSlop: Insets | undefined
+  hitSlop?: Insets | undefined
   /**
    * Reveal header when scrolling down. Implements diffClamp.
    */
