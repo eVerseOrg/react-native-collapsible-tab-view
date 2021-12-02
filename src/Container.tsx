@@ -89,6 +89,7 @@ export const Container = React.memo(
         pagerProps,
         onIndexChange,
         onTabChange,
+        hitSlop = {right: 0, top: 0, left: 0, bottom: 0}
       },
       ref
     ) => {
@@ -633,7 +634,7 @@ export const Container = React.memo(
             headerTranslateY,
           }}
         >
-          <PanGestureHandler onGestureEvent={dragGestureHandler}>
+          <PanGestureHandler hitSlop={hitSlop} onGestureEvent={dragGestureHandler}>
             <Animated.View
               style={[styles.container, containerStyle]}
               onLayout={onLayout}
