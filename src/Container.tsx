@@ -393,16 +393,13 @@ export const Container = React.memo(
 
       const onTabPress = React.useCallback(
         (name: TabName) => {
-          console.log('ON TAB PRESS', name)
           // simplify logic by preventing index change
           // when is scrolling or gliding.
           if (!isScrolling.value && !isGliding.value) {
             const i = tabNames.value.findIndex((n) => n === name)
-            console.log('FOUND TAB INDEX', i)
             calculateNextOffset.value = i
             if (name === focusedTab.value) {
               const ref = refMap[name]
-              console.log('SCROLL TO 0')
               runOnUI(scrollToImpl)(
                 ref,
                 0,
@@ -410,7 +407,6 @@ export const Container = React.memo(
                 true
               )
             } else {
-              console.log('SCROLL TO INDEX')
               containerRef.current?.scrollToIndex({ animated: true, index: i })
             }
           }
