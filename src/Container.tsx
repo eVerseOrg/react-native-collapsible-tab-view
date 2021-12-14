@@ -361,7 +361,6 @@ export const Container = React.memo(
           const height = event.nativeEvent.layout.height
           if (containerHeight.value !== height) containerHeight.value = height
           const width = event.nativeEvent.layout.width
-          console.log('CONTAINER WIDTH', width)
           if (containerWidth.value !== width) containerWidth.value = width
         },
         [containerHeight, containerWidth]
