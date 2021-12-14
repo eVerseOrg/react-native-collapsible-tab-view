@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import {
-  LayoutChangeEvent,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native'
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated, {
   cancelAnimation,
@@ -99,10 +94,10 @@ export const Container = React.memo(
 
       const [refMap, setRef] = useAnimatedDynamicRefs()
 
-      const windowWidth = useWindowDimensions().width
       const firstRender = React.useRef(true)
 
       const containerHeight = useSharedValue<number | undefined>(undefined)
+      const containerWidth = useSharedValue<number | undefined>(1)
 
       const tabBarHeight = useSharedValue<number | undefined>(
         initialTabBarHeight
@@ -131,12 +126,10 @@ export const Container = React.memo(
       const tempYAnimation: ContextType['tempYAnimation'] = useSharedValue(0)
 
       const scrollY: ContextType['scrollY'] = useSharedValue(
-        tabNamesArray.map(() => 0),
-        false
+        tabNamesArray.map(() => 0)
       )
       const contentHeights: ContextType['contentHeights'] = useSharedValue(
-        tabNamesArray.map(() => 0),
-        false
+        tabNamesArray.map(() => 0)
       )
 
       const tabNames: ContextType['tabNames'] = useDerivedValue<TabName[]>(
@@ -150,12 +143,10 @@ export const Container = React.memo(
           : 0
       )
       const scrollX: ContextType['scrollX'] = useSharedValue(
-        index.value * windowWidth,
-        false
+        index.value * (containerWidth.value ?? 0)
       )
       const pagerOpacity = useSharedValue(
-        initialHeaderHeight === undefined || index.value !== 0 ? 0 : 1,
-        false
+        initialHeaderHeight === undefined || index.value !== 0 ? 0 : 1
       )
       const [data, setData] = React.useState(tabNamesArray)
 
@@ -177,18 +168,18 @@ export const Container = React.memo(
 
       const getItemLayout = React.useCallback(
         (_: unknown, index: number) => ({
-          length: windowWidth,
-          offset: windowWidth * index,
+          length: containerWidth.value,
+          offset: (containerWidth.value ?? 0) * index,
           index,
         }),
-        [windowWidth]
+        [containerWidth]
       )
 
       const indexDecimal: ContextType['indexDecimal'] = useDerivedValue(() => {
-        return scrollX.value / windowWidth
-      }, [windowWidth])
+        return scrollX.value / (containerWidth.value ?? 1)
+      }, [containerWidth])
 
-      // handle window resize
+      // handle container resize
       React.useEffect(() => {
         if (!firstRender.current) {
           containerRef.current?.scrollToIndex({
@@ -197,7 +188,7 @@ export const Container = React.memo(
           })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [windowWidth])
+      }, [containerWidth])
 
       const afterRender = useSharedValue(0)
       React.useEffect(() => {
@@ -219,7 +210,7 @@ export const Container = React.memo(
           firstRender.current = false
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [containerRef, initialTabName, windowWidth])
+      }, [containerRef, initialTabName, containerWidth])
 
       // the purpose of this is to scroll to the proper position if dynamic tabs are changing
       useAnimatedReaction(
@@ -369,8 +360,10 @@ export const Container = React.memo(
         (event: LayoutChangeEvent) => {
           const height = event.nativeEvent.layout.height
           if (containerHeight.value !== height) containerHeight.value = height
+          const width = event.nativeEvent.layout.width
+          if (containerWidth.value !== width) containerWidth.value = width
         },
-        [containerHeight]
+        [containerHeight, containerWidth]
       )
 
       // fade in the pager if the headerHeight is not defined
@@ -617,6 +610,7 @@ export const Container = React.memo(
             accDiffClamp,
             indexDecimal,
             containerHeight,
+            containerWidth,
             scrollYCurrent,
             tempYAnimation,
             scrollY,

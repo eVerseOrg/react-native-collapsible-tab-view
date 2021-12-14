@@ -126,17 +126,28 @@ export function useTabNameContext(): TabName {
  * You can use this to get the progessViewOffset and pass to the refresh control of scroll view.
  */
 export function useCollapsibleStyle(): CollapsibleStyle {
-  const { headerHeight, tabBarHeight, containerHeight } = useTabsContext()
-  const windowWidth = useWindowDimensions().width
-  const [containerHeightVal, tabBarHeightVal, headerHeightVal] = [
+  const {
+    headerHeight,
+    tabBarHeight,
+    containerHeight,
+    containerWidth,
+  } = useTabsContext()
+  // const windowWidth = useWindowDimensions().width
+  const [
+    containerHeightVal,
+    containerWidthVal,
+    tabBarHeightVal,
+    headerHeightVal,
+  ] = [
     useConvertAnimatedToValue(containerHeight),
+    useConvertAnimatedToValue(containerWidth),
     useConvertAnimatedToValue(tabBarHeight),
     useConvertAnimatedToValue(headerHeight),
   ]
 
   return useMemo(
     () => ({
-      style: { width: windowWidth },
+      style: { width: containerWidthVal },
       contentContainerStyle: {
         minHeight: IS_IOS
           ? (containerHeightVal || 0) - (tabBarHeightVal || 0)
@@ -147,7 +158,7 @@ export function useCollapsibleStyle(): CollapsibleStyle {
       },
       progressViewOffset: (headerHeightVal || 0) + (tabBarHeightVal || 0),
     }),
-    [containerHeightVal, headerHeightVal, tabBarHeightVal, windowWidth]
+    [containerHeightVal, headerHeightVal, tabBarHeightVal, containerWidthVal]
   )
 }
 
@@ -245,7 +256,7 @@ export const useScrollHandlerY = (
     contentHeights,
   } = useTabsContext()
 
-  const ON_END_REACHED_DEBOUNCE = 2000;
+  const ON_END_REACHED_DEBOUNCE = 2000
   const onEndReachedSent = useSharedValue(false)
 
   const cleanOnEndReachedSent = () => {
@@ -394,7 +405,10 @@ export const useScrollHandlerY = (
             if (distance < onEndReachedThreshold && !onEndReachedSent.value) {
               onEndReachedSent.value = true
               runOnJS(onEndReached)({ distanceFromEnd: distance })
-              runOnJS(setTimeout)(cleanOnEndReachedSent, ON_END_REACHED_DEBOUNCE)
+              runOnJS(setTimeout)(
+                cleanOnEndReachedSent,
+                ON_END_REACHED_DEBOUNCE
+              )
             }
           }
 
