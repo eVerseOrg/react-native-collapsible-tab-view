@@ -2,6 +2,7 @@ import React, { ComponentProps } from 'react'
 import {
   FlatList,
   FlatListProps as RNFlatListProps,
+  LayoutRectangle,
   ScrollView,
   StyleProp,
   ViewStyle,
@@ -19,10 +20,10 @@ export type Ref<T extends RefComponent> = React.RefObject<T>
 export type TabName = string | number
 
 export type Insets = {
-  top?: number;
-  left?: number;
-  bottom?: number;
-  right?: number;
+  top?: number
+  left?: number
+  bottom?: number
+  right?: number
 }
 
 export type RefHandler<T extends TabName = TabName> = {
@@ -155,6 +156,11 @@ export type CollapsibleProps = {
    *  index and tabnames.
    */
   onTabChange?: OnTabChangeCallback<TabName>
+
+  /**
+   * The callback to get the result of root veiw measurement in window
+   */
+  onMeasuredInWindow?: (layout: LayoutRectangle) => void
 }
 
 export type ContextType<T extends TabName = TabName> = {
@@ -265,5 +271,3 @@ export type TabsWithProps<T extends TabName = TabName> = Map<
   T,
   Omit<TabProps<T>, 'children'> & { index: number }
 >
-
-
