@@ -9,6 +9,7 @@ import Animated, {
   runOnUI,
   useAnimatedGestureHandler,
   useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
@@ -84,11 +85,14 @@ export const Container = React.memo(
         pagerProps,
         onIndexChange,
         onTabChange,
-        hitSlop = {right: 0, top: 0, left: 0, bottom: 0}
+        hitSlop = { right: 0, top: 0, left: 0, bottom: 0 },
+        onMeasuredInWindow,
       },
       ref
     ) => {
       const containerRef = useContainerRef()
+
+      const rootViewRef = useAnimatedRef<Animated.View>()
 
       const [tabProps, tabNamesArray] = useTabProps(children, Tab)
 
@@ -362,8 +366,16 @@ export const Container = React.memo(
           if (containerHeight.value !== height) containerHeight.value = height
           const width = event.nativeEvent.layout.width
           if (containerWidth.value !== width) containerWidth.value = width
+
+          if (rootViewRef.current && onMeasuredInWindow) {
+            setTimeout(() => {
+              rootViewRef.current.measureInWindow((x, y, width, height) => {
+                onMeasuredInWindow({ width, height, x, y })
+              })
+            }, 1000)
+          }
         },
-        [containerHeight, containerWidth]
+        [containerHeight, containerWidth, onMeasuredInWindow, rootViewRef]
       )
 
       // fade in the pager if the headerHeight is not defined
@@ -628,8 +640,12 @@ export const Container = React.memo(
             headerTranslateY,
           }}
         >
-          <PanGestureHandler hitSlop={hitSlop} onGestureEvent={dragGestureHandler}>
+          <PanGestureHandler
+            hitSlop={hitSlop}
+            onGestureEvent={dragGestureHandler}
+          >
             <Animated.View
+              ref={rootViewRef}
               style={[styles.container, containerStyle]}
               onLayout={onLayout}
               pointerEvents={
