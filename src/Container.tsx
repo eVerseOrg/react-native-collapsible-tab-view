@@ -64,6 +64,7 @@ export const Container = React.memo(
     (
       {
         initialTabName,
+        isFocused,
         headerHeight: initialHeaderHeight,
         minHeaderHeight = 0,
         pullToRefreshHeight = 0,
@@ -359,6 +360,16 @@ export const Container = React.memo(
         },
         [tabBarHeight]
       )
+
+      useEffect(() => {
+        if (isFocused) {
+          setTimeout(() => {
+            rootViewRef.current.measureInWindow((x, y, width, height) => {
+              onMeasuredInWindow({ width, height, x, y })
+            })
+          }, 1000)
+        }
+      }, [isFocused, rootViewRef])
 
       const onLayout = React.useCallback(
         (event: LayoutChangeEvent) => {

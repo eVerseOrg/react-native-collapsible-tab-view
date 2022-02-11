@@ -67,6 +67,12 @@ export type CollapsibleProps = {
   /**
    * Is optional, but will optimize the first render.
    */
+
+  /**
+   * If the container is on active page
+   * */
+  isFocused?: boolean
+
   headerHeight?: number
   /**
    * Is optional, but will optimize the first render.
