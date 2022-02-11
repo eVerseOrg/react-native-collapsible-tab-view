@@ -185,15 +185,24 @@ export const Container = React.memo(
       }, [containerWidth])
 
       // handle container resize
-      React.useEffect(() => {
-        if (!firstRender.current) {
-          containerRef.current?.scrollToIndex({
-            index: index.value,
-            animated: false,
-          })
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [containerWidth])
+      const scrollXOnResize = useCallback(
+        (index: number) => {
+          if (!firstRender.current) {
+            containerRef.current?.scrollToIndex({ index, animated: false })
+          }
+        },
+        [containerRef, firstRender]
+      )
+
+      useAnimatedReaction(
+        () => {
+          return containerWidth.value
+        },
+        () => {
+          runOnJS(scrollXOnResize)(index.value)
+        },
+        [scrollXOnResize]
+      )
 
       const afterRender = useSharedValue(0)
       React.useEffect(() => {
