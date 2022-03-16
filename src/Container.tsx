@@ -129,6 +129,7 @@ export const Container = React.memo(
       const isScrolling: ContextType['isScrolling'] = useSharedValue(0)
       const scrollYCurrent: ContextType['scrollYCurrent'] = useSharedValue(0)
       const tempYAnimation: ContextType['tempYAnimation'] = useSharedValue(0)
+      const canUpdateIndexDecimal = useSharedValue<boolean>(false)
 
       const scrollY: ContextType['scrollY'] = useSharedValue(
         tabNamesArray.map(() => 0)
@@ -180,9 +181,24 @@ export const Container = React.memo(
         [containerWidth]
       )
 
-      const indexDecimal: ContextType['indexDecimal'] = useDerivedValue(() => {
-        return scrollX.value / (containerWidth.value ?? 1)
-      }, [containerWidth])
+      const indexDecimal: ContextType['indexDecimal'] = useSharedValue(
+        scrollX.value / (containerWidth.value ?? 1)
+      )
+
+      useAnimatedReaction(
+        () => {
+          return {
+            indexDecimal: scrollX.value / (containerWidth.value ?? 1),
+            canUpdate: canUpdateIndexDecimal.value,
+          }
+        },
+        (value) => {
+          if (value.canUpdate) {
+            indexDecimal.value = value.indexDecimal
+          }
+        },
+        []
+      )
 
       // handle container resize
       const scrollXOnResize = useCallback(
@@ -305,9 +321,11 @@ export const Container = React.memo(
             scrollX.value = x
           },
           onBeginDrag: () => {
+            canUpdateIndexDecimal.value = true
             isSwiping.value = true
           },
           onMomentumEnd: () => {
+            canUpdateIndexDecimal.value = false
             isSwiping.value = false
           },
         },
@@ -438,6 +456,7 @@ export const Container = React.memo(
                 true
               )
             } else {
+              canUpdateIndexDecimal.value = true
               containerRef.current?.scrollToIndex({ animated: true, index: i })
             }
           }
